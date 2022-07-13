@@ -3,7 +3,6 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import useSWR from "swr";
-import { DATA } from "../constants/data";
 
 let inDevelopment = false;
 
@@ -19,27 +18,6 @@ const fetcher = (args: any) =>
     },
     redirect: "follow",
   }).then((res) => res.json());
-
-// fetch(
-//   "https://api.imgur.com/3/gallery/{{section}}/{{sort}}/{{window}}/{{page}}?showViral={{showViral}}&mature={{showMature}}&album_previews={{albumPreviews}}",
-//   requestOptions
-// )
-//   .then((response) => response.text())
-//   .then((result) => console.log(result))
-//   .catch((error) => console.log("error", error));
-
-/*
-Key 	Required 	Value
-section 	optional 	hot | top | user. Defaults to hot
-sort 	optional 	viral | top | time | rising (only available with user section). Defaults to viral
-page 	optional 	integer - the data paging number
-window 	optional 	Change the date range of the request if the section is top. Accepted values are day | week | month | year | all. Defaults to day
-*/
-
-/*
-curl --location -g --request GET 'https://api.imgur.com/3/gallery/r/{{subreddit}}/{{sort}}/{{window}}/{{page}}' \
---header 'Authorization: Client-ID b4c20abfbe6d41c'
-*/
 
 const Container = styled.div`
   padding: clamp(16px, 10%, 100px);
@@ -76,18 +54,6 @@ const ThumbnailText = styled.div`
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
-
-const RainbowBorder = styled.div`
-  background: rgba(0, 0, 0, 0)
-    linear-gradient(
-      165deg,
-      rgb(105, 216, 202) 0%,
-      rgb(53, 146, 255) 50%,
-      rgb(156, 49, 255) 100%
-    )
-    repeat scroll 0% 0%;
-  padding: 4px;
 `;
 
 const Thumbnail = styled.div`
@@ -142,10 +108,10 @@ const ThumbnailVideo = ({ src }: { src: string }) => {
     </video>
   );
 };
+
 const Home: NextPage = () => {
   const [filter, setFilter] = useState({
-    section: ["hot", "top", "user"],
-    sort: ["viral", "top", "time", "rising"],
+    sort: ["time", "top"],
     page: 1,
     window: ["day", "week", "month", "year", "all"],
   });
@@ -155,10 +121,10 @@ const Home: NextPage = () => {
   const { data, error } = useSWR(
     process.env.NODE_ENV === "development"
       ? `/api/hello`
-      : `https://api.imgur.com/3/gallery/${filter.section[0]}/${filter.sort[0]}/${filter.window[0]}/${filter.page}?showViral=true&mature=true&album_previews=true`,
+      : `https://api.imgur.com/3/gallery/r/pics/${filter.sort[0]}/${filter.window[1]}/${filter.page}`,
     fetcher
   );
-  console.log({ data, error, dev: process.env.NODE_ENV });
+
   const onResizeWindow = () => {
     const width = window.innerWidth;
     if (width <= 480) {
@@ -185,30 +151,43 @@ const Home: NextPage = () => {
     };
   }, []);
 
+  if (!data) {
+    return <>Loading...</>;
+  }
+
+  if (error) {
+    return <>Error</>;
+  }
+
   return (
     <Container>
       <Grid ref={gridRef}>
-        {DATA.data.map((item) => {
-          if (item.images) {
-            return (
-              <Thumbnail key={item.id}>
-                <ThumbnailContent>
-                  {item.images[0].type === "video/mp4" ? (
-                    <ThumbnailVideo src={item.images?.[0].link} />
-                  ) : (
-                    <ThumbnailImage
-                      src={item.images?.[0].link}
-                      alt={item.title}
-                    />
-                  )}
-                </ThumbnailContent>
-                <div style={{ padding: "1rem" }}>
-                  <ThumbnailText>{item.title}</ThumbnailText>
-                </div>
-              </Thumbnail>
-            );
-          }
+        {data.data.map((item: any) => {
+          return (
+            <Thumbnail key={item.id}>
+              <ThumbnailContent>
+                {item.type === "video/mp4" ? (
+                  <ThumbnailVideo src={item.link} />
+                ) : (
+                  <ThumbnailImage src={item.link} alt={item.title} />
+                )}
+              </ThumbnailContent>
+              <div style={{ padding: "1rem" }}>
+                <ThumbnailText>{item.title}</ThumbnailText>
+              </div>
+            </Thumbnail>
+          );
         })}
+        <button
+          onClick={() => {
+            setFilter({
+              ...filter,
+              page: filter.page + 1,
+            });
+          }}
+        >
+          Load more
+        </button>
       </Grid>
     </Container>
   );

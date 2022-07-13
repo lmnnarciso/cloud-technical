@@ -6,7 +6,7 @@ const nextConfig = {
     styledComponents: true,
   },
   images: {
-    domains: ["i.imgur.com"],
+    domains: ["imgur.com", "i.imgur.com"],
   },
 };
 

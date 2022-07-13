@@ -155,7 +155,7 @@ const Home: NextPage = () => {
   const { data, error } = useSWR(
     process.env.NODE_ENV === "development"
       ? `/api/hello`
-      : `http://api.imgur.com/3/gallery/${filter.section[0]}/${filter.sort[0]}/${filter.window[0]}/${filter.page}?showViral=true&mature=true&album_previews=true`,
+      : `https://api.imgur.com/3/gallery/${filter.section[0]}/${filter.sort[0]}/${filter.window[0]}/${filter.page}?showViral=true&mature=true&album_previews=true`,
     fetcher
   );
   console.log({ data, error, dev: process.env.NODE_ENV });

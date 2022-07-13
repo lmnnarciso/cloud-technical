@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import useSWR from "swr";
-
+import useSWRInfinite from "swr/infinite";
 let inDevelopment = false;
 
 if (process && process.env.NODE_ENV === "development") {
@@ -112,19 +112,20 @@ const ThumbnailVideo = ({ src }: { src: string }) => {
 const Home: NextPage = () => {
   const [filter, setFilter] = useState({
     sort: ["time", "top"],
-    page: 1,
     window: ["day", "week", "month", "year", "all"],
   });
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const { data, error } = useSWR(
-    process.env.NODE_ENV === "development"
-      ? `/api/hello`
-      : `https://api.imgur.com/3/gallery/r/pics/${filter.sort[0]}/${filter.window[1]}/${filter.page}`,
+  const { data, error, size, setSize } = useSWRInfinite(
+    (index) =>
+      process.env.NODE_ENV === "development"
+        ? `/api/hello`
+        : `https://api.imgur.com/3/gallery/r/pics/${filter.sort[0]}/${
+            filter.window[1]
+          }/${index + 1}`,
     fetcher
   );
-
   const onResizeWindow = () => {
     const width = window.innerWidth;
     if (width <= 480) {
@@ -162,33 +163,32 @@ const Home: NextPage = () => {
   return (
     <Container>
       <Grid ref={gridRef}>
-        {data.data.map((item: any) => {
-          return (
-            <Thumbnail key={item.id}>
-              <ThumbnailContent>
-                {item.type === "video/mp4" ? (
-                  <ThumbnailVideo src={item.link} />
-                ) : (
-                  <ThumbnailImage src={item.link} alt={item.title} />
-                )}
-              </ThumbnailContent>
-              <div style={{ padding: "1rem" }}>
-                <ThumbnailText>{item.title}</ThumbnailText>
-              </div>
-            </Thumbnail>
-          );
-        })}
-        <button
-          onClick={() => {
-            setFilter({
-              ...filter,
-              page: filter.page + 1,
-            });
-          }}
-        >
-          Load more
-        </button>
+        {data.map((apiData) =>
+          apiData.data.map((item: any) => {
+            return (
+              <Thumbnail key={item.id}>
+                <ThumbnailContent>
+                  {item.type === "video/mp4" ? (
+                    <ThumbnailVideo src={item.link} />
+                  ) : (
+                    <ThumbnailImage src={item.link} alt={item.title} />
+                  )}
+                </ThumbnailContent>
+                <div style={{ padding: "1rem" }}>
+                  <ThumbnailText>{item.title}</ThumbnailText>
+                </div>
+              </Thumbnail>
+            );
+          })
+        )}
       </Grid>
+      <button
+        onClick={() => {
+          setSize(size + 1);
+        }}
+      >
+        Load more
+      </button>
     </Container>
   );
 };

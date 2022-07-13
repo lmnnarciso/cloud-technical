@@ -2,13 +2,7 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
-let inDevelopment = false;
-
-if (process && process.env.NODE_ENV === "development") {
-  inDevelopment = true;
-}
 
 const fetcher = (args: any) =>
   fetch(args, {
@@ -57,11 +51,15 @@ const ThumbnailText = styled.div`
 `;
 
 const Thumbnail = styled.div`
-  background-color: #67696f;
+  background-color: #535458;
   color: white;
   border-radius: 4px;
   font-weight: 600;
   position: relative;
+  cursor: pointer;
+  :hover {
+    background-color: #67696f;
+  }
 `;
 
 const ThumbnailContent = styled.div`
@@ -108,6 +106,20 @@ const ThumbnailVideo = ({ src }: { src: string }) => {
     </video>
   );
 };
+
+const Button = styled.button`
+  width: 100%;
+  background-color: #1bb76e;
+  color: white;
+  font-weight: 600;
+  padding: 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  :hover {
+    background-color: #4fe8a0;
+  }
+`;
 
 const Home: NextPage = () => {
   const [filter, setFilter] = useState({
@@ -182,13 +194,13 @@ const Home: NextPage = () => {
           })
         )}
       </Grid>
-      <button
+      <Button
         onClick={() => {
           setSize(size + 1);
         }}
       >
         Load more
-      </button>
+      </Button>
     </Container>
   );
 };

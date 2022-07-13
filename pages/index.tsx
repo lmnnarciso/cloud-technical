@@ -3,7 +3,13 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import useSWR from "swr";
-import { DATA } from "./data";
+import { DATA } from "../constants/data";
+
+let inDevelopment = false;
+
+if (process && process.env.NODE_ENV === "development") {
+  inDevelopment = true;
+}
 
 const fetcher = (args: any) =>
   fetch(args, {
@@ -67,18 +73,9 @@ const ThumbnailText = styled.div`
   max-width: 100%;
   margin: 0 auto;
   -webkit-line-clamp: 2;
-  /* autoprefixer: off */
   -webkit-box-orient: vertical;
-  /* autoprefixer: on */
   overflow: hidden;
   text-overflow: ellipsis;
-  /* text-overflow: ellipsis;
-  overflow: hidden;
-  max-height: 3rem;
-  margin: 6px;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical; */
-  /* color: "white"; */
 `;
 
 const RainbowBorder = styled.div`
@@ -109,7 +106,7 @@ const ThumbnailContent = styled.div`
   border-top-right-radius: 4px;
 `;
 
-const ThumbnailImage = ({ src }: { src: string }) => {
+const ThumbnailImage = ({ src, alt }: { src: string; alt: string }) => {
   return (
     <Image
       style={{
@@ -123,6 +120,7 @@ const ThumbnailImage = ({ src }: { src: string }) => {
       width="100%"
       height="100%"
       objectFit="cover"
+      alt={alt}
     />
   );
 };
@@ -155,10 +153,12 @@ const Home: NextPage = () => {
   const gridRef = useRef<HTMLDivElement>(null);
 
   const { data, error } = useSWR(
-    `http://api.imgur.com/3/gallery/${filter.section[0]}/${filter.sort[0]}/${filter.window[0]}/${filter.page}?showViral=true&mature=true&album_previews=true`,
+    process.env.NODE_ENV === "development"
+      ? `/api/hello`
+      : `http://api.imgur.com/3/gallery/${filter.section[0]}/${filter.sort[0]}/${filter.window[0]}/${filter.page}?showViral=true&mature=true&album_previews=true`,
     fetcher
   );
-  console.log({ data, error });
+  console.log({ data, error, dev: process.env.NODE_ENV });
   const onResizeWindow = () => {
     const width = window.innerWidth;
     if (width <= 480) {
@@ -190,29 +190,16 @@ const Home: NextPage = () => {
       <Grid ref={gridRef}>
         {DATA.data.map((item) => {
           if (item.images) {
-            if (item.images?.[0].in_most_viral) {
-              <RainbowBorder>
-                <Thumbnail>
-                  <ThumbnailContent>
-                    {item.images[0].type === "video/mp4" ? (
-                      <ThumbnailVideo src={item.images?.[0].link} />
-                    ) : (
-                      <ThumbnailImage src={item.images?.[0].link} />
-                    )}
-                  </ThumbnailContent>
-                  <div style={{ padding: "1rem" }}>
-                    <ThumbnailText>{item.title}</ThumbnailText>
-                  </div>
-                </Thumbnail>
-              </RainbowBorder>;
-            }
             return (
-              <Thumbnail>
+              <Thumbnail key={item.id}>
                 <ThumbnailContent>
                   {item.images[0].type === "video/mp4" ? (
                     <ThumbnailVideo src={item.images?.[0].link} />
                   ) : (
-                    <ThumbnailImage src={item.images?.[0].link} />
+                    <ThumbnailImage
+                      src={item.images?.[0].link}
+                      alt={item.title}
+                    />
                   )}
                 </ThumbnailContent>
                 <div style={{ padding: "1rem" }}>
